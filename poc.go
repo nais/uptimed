@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/rs/xid"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 )
@@ -11,8 +13,12 @@ import (
 var monitors = make(map[string]Monitor)
 
 type Monitor struct {
-	stop   chan struct{}
-	result chan int
+	id       string
+	endpoint string
+	stop     chan struct{}
+	result   chan int
+	timeout  <-chan time.Time
+	ticker   <-chan time.Time
 }
 
 func main() {
@@ -25,37 +31,75 @@ func main() {
 	http.ListenAndServe(serveAddress, r)
 }
 
+func startMonitor(w http.ResponseWriter, r *http.Request) {
+	monitor, err := NewMonitor(r)
 
-func startMonitor(w http.ResponseWriter, _ *http.Request) {
-	id := strconv.FormatInt(time.Now().UnixNano(), 10) // TODO might want to switch this for some other UUID
-	stop := make(chan struct{})
-	result := make(chan int)
-	go monitor(result, stop, id, 2*time.Second)
+	if err != nil {
+		w.WriteHeader(400)
+		fmt.Fprint(w, err)
+		return
+	}
 
-	monitors[id] = Monitor{stop: stop, result: result}
+	go run(&monitor)
 
-	fmt.Fprintf(w, "%s\n", id)
+	monitors[monitor.id] = monitor
+
+	fmt.Fprintf(w, "%s\n", monitor.id)
 }
 
-func monitor(result chan<- int, stop <-chan struct{}, id string, interval time.Duration) {
-	fmt.Println("monitoring...", id)
-	defer close(result)
+func NewMonitor(req *http.Request) (Monitor, error) {
+	queryParams := req.URL.Query()
 
-	for {
+	endpoint := queryParams.Get("endpoint")
+	if len(endpoint) == 0 {
+		return Monitor{}, fmt.Errorf("no endpoint query parameter provided")
+	}
+
+	if _, err := url.Parse(endpoint); err != nil {
+		return Monitor{}, fmt.Errorf("invalid endpoint %s: %s", endpoint, err)
+	}
+
+	interval, err := parseIntOrDefault(queryParams.Get("interval"), 2)
+	if err != nil {
+		return Monitor{}, err
+	}
+
+	timeout, err := parseIntOrDefault(queryParams.Get("timeout"), 1800)
+	if err != nil {
+		return Monitor{}, err
+	}
+
+	return Monitor{
+		endpoint: endpoint,
+		id:       xid.New().String(),
+		stop:     make(chan struct{}),
+		result:   make(chan int),
+		ticker:   time.NewTicker(time.Duration(interval) * time.Second).C,
+		timeout:  time.NewTimer(time.Duration(timeout) * time.Second).C,
+	}, nil
+}
+
+func run(m *Monitor) {
+	fmt.Println("monitoring...", m.id)
+	defer close(m.result)
+
+	for range m.ticker {
 		// non-blocking stop channel
 		select {
-		case <-stop:
-			fmt.Println("monitor stopped", id)
+		case <-m.stop:
+			fmt.Println("monitor stopped", m.id)
 			// calculate and write result to channel
-			result <- 69
+			m.result <- 69
+			return
+		case <-m.timeout:
+			fmt.Println("timed out", m.id)
+			m.result <- -1
 			return
 		default:
-			fmt.Println("running", id)
+			fmt.Println("running", m.id)
 			// perform http call here
 			// and save result in func-local var
 		}
-
-		time.Sleep(interval)
 	}
 }
 
@@ -72,7 +116,19 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	close(monitor.stop)
-	result := <-monitor.result
+	fmt.Fprintf(w, "stopping %s, got result %d\n", id, <-monitor.result)
+}
 
-	fmt.Fprintf(w, "stopping %s, got result %d\n", id, result)
+func parseIntOrDefault(maybeInt string, defaultValue int) (int, error) {
+	if len(maybeInt) == 0 {
+		return defaultValue, nil
+	}
+
+	val, err := strconv.Atoi(maybeInt)
+
+	if err != nil {
+		return 0, fmt.Errorf("unable to parse string %s to int: %s", maybeInt, err)
+	}
+
+	return val, nil
 }
