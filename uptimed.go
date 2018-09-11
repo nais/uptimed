@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
-	m "github.com/nais/uptimed/monitor"
 	"github.com/hashicorp/go-multierror"
+	m "github.com/nais/uptimed/monitor"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -21,7 +21,6 @@ func main() {
 	fmt.Println("serving on", serveAddress)
 	http.ListenAndServe(serveAddress, r)
 }
-
 
 func startMonitor(w http.ResponseWriter, r *http.Request) {
 	endpoint, interval, timeout, err := getMonitorSettings(r.URL.Query())
@@ -56,7 +55,6 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "stopping %s, got result %d\n", id, <-monitor.Result)
 }
 
-
 func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
 	var result = &multierror.Error{}
 
@@ -65,9 +63,10 @@ func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
 		multierror.Append(result, fmt.Errorf("no endpoint query parameter provided"))
 	}
 
-	endpoint, err := url.Parse(endpointStr)
+	endpoint, err := url.ParseRequestURI(endpointStr)
+	fmt.Println(endpoint, err)
 	if err != nil {
-		multierror.Append(result, fmt.Errorf("invalid endpoint %s: %s", endpoint, err))
+		multierror.Append(result, fmt.Errorf("invalid endpoint %s: %s", endpointStr, err))
 	}
 
 	interval, err := parseIntOrDefault(input.Get("interval"), 2)
