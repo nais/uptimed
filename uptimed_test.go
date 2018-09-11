@@ -53,6 +53,16 @@ func TestDefaultSettings(t *testing.T) {
 		endpoint, interval, timeout, e := getMonitorSettings(values)
 		assert.NoError(t, e)
 		assert.Equal(t, "http://test.no", endpoint.String())
+		assert.Equal(t, 1, interval)
+		assert.Equal(t, 2, timeout)
+	})
+	t.Run("defaults applied when not provided", func(t *testing.T) {
+		values := url.Values{
+			"endpoint": []string{"http://test.no"},
+		}
+		endpoint, interval, timeout, e := getMonitorSettings(values)
+		assert.NoError(t, e)
+		assert.Equal(t, "http://test.no", endpoint.String())
 		assert.Equal(t, 2, interval)
 		assert.Equal(t, 1800, timeout)
 	})
