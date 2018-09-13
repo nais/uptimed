@@ -84,3 +84,15 @@ func TestDefaultSettings(t *testing.T) {
 		}
 	})
 }
+
+func TestTimeoutIntervalCorrelation(t *testing.T) {
+	t.Run("happy path", func(t *testing.T) {
+		values := url.Values{
+			"endpoint": []string{"http://test.no"},
+			"interval": []string{"2"},
+			"timeout":  []string{"2"},
+		}
+		_, _, _, e := getMonitorSettings(values)
+		assert.EqualErrorf(t, e, "1 error occurred:\n\t* timeout must be longer than interval\n\n", "")
+	})
+}

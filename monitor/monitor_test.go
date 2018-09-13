@@ -36,4 +36,3 @@ func TestMonitorStop(t *testing.T) {
 	close(monitor.Stop)
 	assert.Equal(t, 69, <-monitor.Result)
 }
-

@@ -17,7 +17,7 @@ func main() {
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
 
-	serveAddress := "127.0.0.1:8080"
+	serveAddress := ":8080"
 	fmt.Println("serving on", serveAddress)
 	http.ListenAndServe(serveAddress, r)
 }
@@ -77,6 +77,10 @@ func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
 	timeout, err := parseIntOrDefault(input.Get("timeout"), 1800)
 	if err != nil {
 		multierror.Append(result, err)
+	}
+
+	if interval >= timeout {
+		multierror.Append(result, fmt.Errorf("timeout must be longer than interval"))
 	}
 
 	return endpoint, interval, timeout, result.ErrorOrNil()
