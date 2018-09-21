@@ -17,7 +17,7 @@ func main() {
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
 
-	serveAddress := ":8080"
+	serveAddress := "127.0.0.1:8080"
 	fmt.Println("serving on", serveAddress)
 	http.ListenAndServe(serveAddress, r)
 }
@@ -43,15 +43,17 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	monitor := monitors[id]
+	monitor, exist := monitors[id]
 
-	if monitor == (m.Monitor{}) {
+	if ! exist {
 		w.WriteHeader(404)
 		fmt.Fprintf(w, "monitor with id %s not found\n", id)
 		return
 	}
 
-	close(monitor.Stop)
+	if len(monitor.Result) == 0 {
+		close(monitor.Stop)
+	}
 	fmt.Fprintf(w, "stopping %s, got result %d\n", id, <-monitor.Result)
 }
 

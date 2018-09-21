@@ -23,7 +23,7 @@ func TestMonitorTimeout(t *testing.T) {
 	select {
 	case <-failedTimeout:
 		t.Fatal("monitor should have timed out before this")
-	case <-monitor.Timeout:
+	case <-monitor.timeout:
 		return
 	}
 }
