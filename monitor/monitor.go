@@ -2,10 +2,12 @@ package monitor
 
 import (
 	"fmt"
+	"github.com/hashicorp/go-multierror"
 	"github.com/rs/xid"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -13,7 +15,6 @@ type Monitor struct {
 	Id             string
 	endpoint       *url.URL
 	stop           chan struct{}
-	Running        bool
 	timeout        <-chan time.Time
 	ticker         <-chan time.Time
 	interval       int
@@ -52,8 +53,12 @@ type FailedRequest struct {
 	Reason    string
 }
 
-func New(endpoint *url.URL, interval, timeout int) Monitor {
-	//TODO: maybe move basic validation logic here (valid url, ints for timeouts etc)
+func New(urlQuery url.Values) (Monitor, error) {
+
+	endpoint, interval, timeout, err := getMonitorSettings(urlQuery)
+	if err != nil {
+		return Monitor{}, fmt.Errorf("unable to get monitor settings: %s\n", err)
+	}
 
 	return Monitor{
 		endpoint: endpoint,
@@ -62,7 +67,7 @@ func New(endpoint *url.URL, interval, timeout int) Monitor {
 		interval: interval,
 		ticker:   time.NewTicker(time.Duration(interval) * time.Second).C,
 		timeout:  time.NewTimer(time.Duration(timeout) * time.Second).C,
-	}
+	}, nil
 }
 
 func (m *Monitor) Stop() {
@@ -75,7 +80,6 @@ func (m *Monitor) Run() {
 	go func() {
 		defer func() {
 			m.StopTime = time.Now()
-			m.Running = false
 		}()
 
 		fmt.Println("monitor started", m.Id)
@@ -113,4 +117,50 @@ func (m *Monitor) Run() {
 			}
 		}
 	}()
+}
+
+func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
+	var result = &multierror.Error{}
+
+	endpointStr := input.Get("endpoint")
+	if len(endpointStr) == 0 {
+		multierror.Append(result, fmt.Errorf("no endpoint query parameter provided"))
+	}
+
+	endpoint, err := url.ParseRequestURI(endpointStr)
+
+	if err != nil {
+		multierror.Append(result, fmt.Errorf("invalid endpoint %s: %s", endpointStr, err))
+	}
+
+	interval, err := parseIntOrDefault(input.Get("interval"), 2)
+	if err != nil {
+		multierror.Append(result, err)
+	}
+
+	timeout, err := parseIntOrDefault(input.Get("timeout"), 1800)
+	if err != nil {
+		multierror.Append(result, err)
+	}
+
+	if interval >= timeout {
+		multierror.Append(result, fmt.Errorf("timeout must be longer than interval"))
+	}
+
+	return endpoint, interval, timeout, result.ErrorOrNil()
+}
+
+
+func parseIntOrDefault(maybeInt string, defaultValue int) (int, error) {
+	if len(maybeInt) == 0 {
+		return defaultValue, nil
+	}
+
+	val, err := strconv.Atoi(maybeInt)
+
+	if err != nil {
+		return 0, fmt.Errorf("unable to parse string %s to int: %s", maybeInt, err)
+	}
+
+	return val, nil
 }
