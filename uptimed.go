@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-multierror"
@@ -10,16 +11,22 @@ import (
 	"strconv"
 )
 
-var monitors = make(map[string]m.Monitor)
+var bindAddr string
+
+func init() {
+	flag.StringVar(&bindAddr, "bind-address", "127.0.0.1:8080", "ip:port where http requests are served")
+	flag.Parse()
+}
+
+var monitors = make(map[string]*m.Monitor)
 
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
 
-	serveAddress := "127.0.0.1:8080"
-	fmt.Println("serving on", serveAddress)
-	http.ListenAndServe(serveAddress, r)
+	fmt.Println("running @", bindAddr)
+	http.ListenAndServe(bindAddr, r)
 }
 
 func startMonitor(w http.ResponseWriter, r *http.Request) {
@@ -34,7 +41,7 @@ func startMonitor(w http.ResponseWriter, r *http.Request) {
 	monitor := m.New(endpoint, interval, timeout)
 	monitor.Run()
 
-	monitors[monitor.Id] = monitor
+	monitors[monitor.Id] = &monitor
 
 	fmt.Fprintf(w, "%s\n", monitor.Id)
 }
@@ -43,18 +50,17 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	monitor, exist := monitors[id]
+	monitor, found := monitors[id]
 
-	if ! exist {
+	if !found {
 		w.WriteHeader(404)
 		fmt.Fprintf(w, "monitor with id %s not found\n", id)
 		return
 	}
 
-	if len(monitor.Result) == 0 {
-		close(monitor.Stop)
-	}
-	fmt.Fprintf(w, "stopping %s, got result %d\n", id, <-monitor.Result)
+	monitor.Stop()
+
+	fmt.Fprintf(w, "%s\n", monitor.Result())
 }
 
 func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
@@ -66,7 +72,7 @@ func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
 	}
 
 	endpoint, err := url.ParseRequestURI(endpointStr)
-	fmt.Println(endpoint, err)
+
 	if err != nil {
 		multierror.Append(result, fmt.Errorf("invalid endpoint %s: %s", endpointStr, err))
 	}
@@ -87,6 +93,7 @@ func getMonitorSettings(input url.Values) (*url.URL, int, int, error) {
 
 	return endpoint, interval, timeout, result.ErrorOrNil()
 }
+
 
 func parseIntOrDefault(maybeInt string, defaultValue int) (int, error) {
 	if len(maybeInt) == 0 {

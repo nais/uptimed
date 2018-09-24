@@ -56,6 +56,7 @@ func TestDefaultSettings(t *testing.T) {
 		assert.Equal(t, 1, interval)
 		assert.Equal(t, 2, timeout)
 	})
+
 	t.Run("defaults applied when not provided", func(t *testing.T) {
 		values := url.Values{
 			"endpoint": []string{"http://test.no"},
