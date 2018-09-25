@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// structure for each monitor we set up
 type Monitor struct {
 	Id             string
 	endpoint       *url.URL
@@ -22,6 +23,13 @@ type Monitor struct {
 	FailedRequests []FailedRequest
 }
 
+// structure for each failed request
+type FailedRequest struct {
+	Timestamp time.Time
+	Reason    string
+}
+
+// prints the result of the monitoring
 func (m *Monitor) Result() string {
 	return fmt.Sprintf("uptime=%.2f%%\n%d / %d\n%sstarted: %s\nstopped: %s",
 		calculateUptimePercent(m.RequestCount, len(m.FailedRequests)),
@@ -32,6 +40,7 @@ func (m *Monitor) Result() string {
 		m.StopTime.Format(time.RFC3339))
 }
 
+// prints the failed requests should there be any
 func (m *Monitor) PrintFailed() string {
 	failedStr := fmt.Sprintf("errorcount: %d\n", len(m.FailedRequests))
 	for _, failed := range m.FailedRequests {
@@ -46,11 +55,7 @@ func calculateUptimePercent(total, failed int) float64 {
 	return (successful / float64(total)) * 100
 }
 
-type FailedRequest struct {
-	Timestamp time.Time
-	Reason    string
-}
-
+// creates a new Monitor struct
 func New(endpoint *url.URL, interval int, timeout int) Monitor {
 	return Monitor{
 		endpoint: endpoint,
@@ -62,11 +67,13 @@ func New(endpoint *url.URL, interval int, timeout int) Monitor {
 	}
 }
 
+// stops the monitoring and sleeps to allow goroutine to return
 func (m *Monitor) Stop() {
 	close(m.stop)
-	time.Sleep((time.Duration(m.interval) * time.Second) + (250 * time.Millisecond)) // allow goroutine to return
+	time.Sleep((time.Duration(m.interval) * time.Second) + (250 * time.Millisecond))
 }
 
+// controls the action of the monitoring of applications
 func (m *Monitor) Run() {
 	m.StartTime = time.Now()
 	go func() {
