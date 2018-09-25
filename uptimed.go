@@ -4,8 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/go-multierror"
 	m "github.com/nais/uptimed/monitor"
 	"net/http"
+	"net/url"
+	"strconv"
 )
 
 var bindAddr string
@@ -42,10 +45,15 @@ func main() {
 }
 
 func startMonitor(w http.ResponseWriter, r *http.Request) {
-	monitor, err := m.New(r.URL.Query())
-	if err != nil {
+	endpoint, interval, timeout, err := getMonitorSettings(r.URL.Query())
 
+	if err != nil {
+		w.WriteHeader(400)
+		fmt.Fprintf(w, "unable to get monitor settings: %s\n", err)
+		return
 	}
+
+	monitor := m.New(endpoint, interval, timeout)
 
 	monitor.Run()
 	monitors[monitor.Id] = &monitor
@@ -70,3 +78,47 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "%s\n", monitor.Result())
 }
 
+func getMonitorSettings(queryParams url.Values) (*url.URL, int, int, error) {
+	var result = &multierror.Error{}
+
+	endpointStr := queryParams.Get("endpoint")
+	if len(endpointStr) == 0 {
+		multierror.Append(result, fmt.Errorf("no endpoint query parameter provided"))
+	}
+
+	endpoint, err := url.ParseRequestURI(endpointStr)
+
+	if err != nil {
+		multierror.Append(result, fmt.Errorf("invalid endpoint %s: %s", endpointStr, err))
+	}
+
+	interval, err := parseIntOrDefault(queryParams.Get("interval"), 2)
+	if err != nil {
+		multierror.Append(result, err)
+	}
+
+	timeout, err := parseIntOrDefault(queryParams.Get("timeout"), 1800)
+	if err != nil {
+		multierror.Append(result, err)
+	}
+
+	if interval >= timeout {
+		multierror.Append(result, fmt.Errorf("timeout must be longer than interval"))
+	}
+
+	return endpoint, interval, timeout, result.ErrorOrNil()
+}
+
+func parseIntOrDefault(maybeInt string, defaultValue int) (int, error) {
+	if len(maybeInt) == 0 {
+		return defaultValue, nil
+	}
+
+	val, err := strconv.Atoi(maybeInt)
+
+	if err != nil {
+		return 0, fmt.Errorf("unable to parse string %s to int: %s", maybeInt, err)
+	}
+
+	return val, nil
+}

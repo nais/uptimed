@@ -1,6 +1,7 @@
 package monitor
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
@@ -33,6 +34,21 @@ func TestMonitorStop(t *testing.T) {
 	monitor := New(endpoint, 1, 3)
 
 	monitor.Run()
-	close(monitor.Stop)
-	assert.Equal(t, 69, <-monitor.Result)
+	monitor.Stop()
+
+	//TODO: use gock to mock two http calls one failing and one successful and check for 1/2 (50%)
+	fmt.Println(monitor.Result())
+}
+
+func TestNonexistantHost(t *testing.T) {
+	endpoint, _ := url.Parse("http://test.nonexistant")
+	monitor := New(endpoint, 1, 3)
+
+	monitor.Run()
+	time.Sleep(2 * time.Second)
+	monitor.Stop()
+
+	result := monitor.Result()
+	assert.Contains(t, result, "errorcount: 1")
+	assert.Contains(t, result, "uptime=0.00%")
 }
