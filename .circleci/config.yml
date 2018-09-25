@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Login to Dockerhub
-          command: echo "$DOCKER_PASSWORD" | base64 --decode | docker login -u "$DOCKER_USER" --password-stdin"
+          command: echo "$DOCKER_PASSWORD" | base64 --decode | docker login -u "$DOCKER_USER" --password-stdin
       - run:
           name: Build Docker container
           command: docker build -t navikt/uptimed:canary .
