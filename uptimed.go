@@ -25,23 +25,8 @@ func main() {
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
 
-/*	go func() {
-		for {
-			for id, monitor := range monitors {
-				fmt.Println("Verifying monitor: ", id)
-				if monitor.StopTime.IsZero() {
-					fmt.Println("Deleting monitor: ", id)
-					delete(monitors, id)
-				}
-
-			}
-			time.Sleep(100 * time.Second)
-		}
-	}()*/
-
 	fmt.Println("running @", bindAddr)
 	http.ListenAndServe(bindAddr, r)
-
 }
 
 func startMonitor(w http.ResponseWriter, r *http.Request) {
@@ -74,6 +59,7 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	}
 
 	monitor.Stop()
+	delete(monitors, id)
 
 	fmt.Fprintf(w, "%s\n", monitor.Result())
 }
