@@ -2,6 +2,7 @@ package monitor
 
 import (
 	"fmt"
+	"github.com/h2non/gock"
 	"github.com/stretchr/testify/assert"
 	"net/url"
 	"testing"
@@ -29,14 +30,39 @@ func TestMonitorTimeout(t *testing.T) {
 	}
 }
 
-func TestMonitorStop(t *testing.T) {
+func TestMonitorOk(t *testing.T) {
 	endpoint, _ := url.Parse("http://test.no")
 	monitor := New(endpoint, 1, 3)
 
+	defer gock.Off()
+	gock.New(fmt.Sprintf("%s", endpoint)).Reply(200)
+
 	monitor.Run()
+	time.Sleep(2 * time.Second)
 	monitor.Stop()
 
-	//TODO: use gock to mock two http calls one failing and one successful and check for 1/2 (50%)
+	assert.Equal(t, gock.IsDone(), true)
+	assert.Equal(t, 1, monitor.RequestCount)
+	assert.Equal(t, 0, len(monitor.FailedRequests))
+
+	fmt.Println(monitor.Result())
+}
+
+func TestMonitorFailed(t *testing.T) {
+	endpoint, _ := url.Parse("http://test.no")
+	monitor := New(endpoint, 1, 3)
+
+	defer gock.Off()
+	gock.New(fmt.Sprintf("%s", endpoint)).Reply(500)
+
+	monitor.Run()
+	time.Sleep(2 * time.Second)
+	monitor.Stop()
+
+	assert.Equal(t, gock.IsDone(), true)
+	assert.Equal(t, 1, monitor.RequestCount)
+	assert.Equal(t, 1, len(monitor.FailedRequests))
+
 	fmt.Println(monitor.Result())
 }
 

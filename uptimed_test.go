@@ -97,3 +97,14 @@ func TestTimeoutIntervalCorrelation(t *testing.T) {
 		assert.EqualErrorf(t, e, "1 error occurred:\n\t* timeout must be longer than interval\n\n", "")
 	})
 }
+
+func TestStopMonitor(t *testing.T) {
+	t.Run("test monitor not found", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/stop/nonsense", nil)
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(stopMonitor)
+		handler.ServeHTTP(rr, req)
+
+		assert.Equal(t, http.StatusNotFound, rr.Code)
+	})
+}
