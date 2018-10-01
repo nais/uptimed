@@ -34,7 +34,8 @@ func main() {
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
 	r.HandleFunc("/isAlive", func(w http.ResponseWriter, _ *http.Request) {
-		w.WriteHeader(http.StatusOK)})
+		w.WriteHeader(http.StatusOK)
+	})
 
 	log.Println("running @", bindAddr)
 	server := &http.Server{Addr: bindAddr, Handler: r}

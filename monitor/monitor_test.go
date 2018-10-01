@@ -30,7 +30,7 @@ func TestMonitorTimeout(t *testing.T) {
 	}
 }
 
-func TestMonitorOk(t *testing.T) {
+func TestMonitorSuccess(t *testing.T) {
 	endpoint, _ := url.Parse("http://test.no")
 	monitor := New(endpoint, 1, 3)
 
