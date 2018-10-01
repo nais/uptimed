@@ -38,7 +38,7 @@ func TestMonitorSuccess(t *testing.T) {
 	gock.New(fmt.Sprintf("%s", endpoint)).Reply(200)
 
 	monitor.Run()
-	time.Sleep(2 * time.Second)
+	time.Sleep(1*time.Second + 100*time.Millisecond)
 	monitor.Stop()
 
 	assert.Equal(t, gock.IsDone(), true)
