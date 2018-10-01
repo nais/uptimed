@@ -15,4 +15,4 @@ MAINTAINER Sten Røkke <sten.ivar.rokke@nav.no>
 RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY --from=builder /src/uptimed /app/uptimed
-CMD ["/app/uptimed", "--logtostderr=true"]
+CMD ["/app/uptimed"]
