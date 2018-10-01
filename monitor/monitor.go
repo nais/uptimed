@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/rs/xid"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -81,15 +82,15 @@ func (m *Monitor) Run() {
 			m.StopTime = time.Now()
 		}()
 
-		fmt.Println("monitor started", m.Id)
+		log.Println("monitor started", m.Id)
 
 		for range m.ticker {
 			select {
 			case <-m.stop:
-				fmt.Println("monitor stopped", m.Id)
+				log.Println("monitor stopped", m.Id)
 				return
 			case <-m.timeout:
-				fmt.Println("timed out", m.Id)
+				log.Println("timed out", m.Id)
 				return
 			default:
 				m.RequestCount++

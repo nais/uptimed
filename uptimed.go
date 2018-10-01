@@ -1,14 +1,21 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-multierror"
+	"github.com/nais/uptimed/health"
 	m "github.com/nais/uptimed/monitor"
+	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
+	"time"
 )
 
 var bindAddr string
@@ -21,12 +28,35 @@ func init() {
 var monitors = make(map[string]*m.Monitor)
 
 func main() {
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
 	r := mux.NewRouter()
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
+	r.HandleFunc("/isAlive", health.IsAlive)
 
-	fmt.Println("running @", bindAddr)
-	http.ListenAndServe(bindAddr, r)
+	log.Println("running @", bindAddr)
+	server := &http.Server{Addr: bindAddr, Handler: r}
+
+	go func() {
+		log.Fatal(server.ListenAndServe())
+	}()
+
+	killSignal := <-interrupt
+	switch killSignal {
+	case os.Interrupt:
+		log.Print("SIGINT received, shutting down gracefully")
+	case syscall.SIGTERM:
+		log.Print("SIGTERM received, shutting down gracefully")
+	}
+
+	if len(monitors) > 0 {
+		log.Printf("Waiting for %d monitor(s) to finish", len(monitors))
+		time.Sleep(30 * time.Second)
+	}
+	log.Print("Shutting down uptimed")
+	server.Shutdown(context.Background())
 }
 
 func startMonitor(w http.ResponseWriter, r *http.Request) {
