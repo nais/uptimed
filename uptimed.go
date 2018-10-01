@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/go-multierror"
-	"github.com/nais/uptimed/health"
 	m "github.com/nais/uptimed/monitor"
 	"log"
 	"net/http"
@@ -34,7 +33,8 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/start", startMonitor).Methods("POST")
 	r.HandleFunc("/stop/{id}", stopMonitor).Methods("POST")
-	r.HandleFunc("/isAlive", health.IsAlive)
+	r.HandleFunc("/isAlive", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)})
 
 	log.Println("running @", bindAddr)
 	server := &http.Server{Addr: bindAddr, Handler: r}
