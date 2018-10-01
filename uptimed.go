@@ -20,7 +20,7 @@ import (
 var bindAddr string
 
 func init() {
-	flag.StringVar(&bindAddr, "bind-address", "127.0.0.1:8080", "ip:port where http requests are served")
+	flag.StringVar(&bindAddr, "bind-address", ":8081", "ip:port where http requests are served")
 	flag.Parse()
 }
 
