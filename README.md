@@ -6,7 +6,7 @@
 
 Tool for checking the uptime of a given endpoint
 
-## usage
+## Usage
 
 ```
 $ curl http://<uptimed>/start?url=<url>&timeout=1800&interval=2
@@ -15,5 +15,13 @@ $ // do stuff
 $ curl http://<uptimed>/stop/<monitor_id>
 <uptime result>
 ```
+## Development
 
+[Go modules](https://github.com/golang/go/wiki/Modules)
+are used for dependency tracking. Make sure you do `export GO111MODULE=on` before running any Go commands.
+It is no longer needed to have the project checked out in your `$GOPATH`.
+
+```
+go run uptimed.go --bind-address=127.0.0.1:8080
+```
 
