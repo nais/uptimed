@@ -50,13 +50,13 @@ func TestMonitorSuccess(t *testing.T) {
 
 func TestMonitorFailed(t *testing.T) {
 	endpoint, _ := url.Parse("http://test.no")
-	monitor := New(endpoint, 1, 3)
+	monitor := New(endpoint, 3, 6)
 
 	defer gock.Off()
 	gock.New(fmt.Sprintf("%s", endpoint)).Reply(500)
 
 	monitor.Run()
-	time.Sleep(2 * time.Second)
+	time.Sleep(4 * time.Second)
 	monitor.Stop()
 
 	assert.Equal(t, gock.IsDone(), true)
