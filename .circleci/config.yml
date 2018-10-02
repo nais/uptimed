@@ -7,12 +7,27 @@ jobs:
       - setup_remote_docker
       - checkout
       - run:
+          name: Setting application version
+          command: 'echo export VERSION=$(cat ./version)' >> $BASH_ENV
+      - run:
           name: Login to Dockerhub
           command: echo "$DOCKER_PASSWORD" | base64 --decode | docker login -u "$DOCKER_USER" --password-stdin
       - run:
           name: Build Docker container
-          command: docker build -t navikt/uptimed:canary .
+          command: docker build -t navikt/uptimed:"$VERSION" .
       - run:
           name: Push canary Docker container
-          command: docker push navikt/uptimed:canary
+          command: docker push navikt/uptimed:"$VERSION"
+
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: ./artifacts
+      - run:
+          name: \"Publish Release on GitHub\"
+          command: |
+            VERSION=$(cat ./version)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
 
