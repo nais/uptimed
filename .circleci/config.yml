@@ -8,7 +8,7 @@ jobs:
       - checkout
       - run:
           name: Setting application version
-          command: 'echo export VERSION=$(cat ./version)' >> $BASH_ENV
+          command: echo 'export VERSION=$(cat ./version)' >> $BASH_ENV
       - run:
           name: Login to Dockerhub
           command: echo "$DOCKER_PASSWORD" | base64 --decode | docker login -u "$DOCKER_USER" --password-stdin
