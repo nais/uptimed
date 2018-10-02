@@ -71,6 +71,7 @@ func New(endpoint *url.URL, interval int, timeout int) Monitor {
 // Stop stops the monitoring and sleeps to allow goroutine to return
 func (m *Monitor) Stop() {
 	close(m.stop)
+	log.Printf("Monitor %s stopped", m.Id)
 	time.Sleep((time.Duration(m.interval) * time.Second) + (250 * time.Millisecond))
 }
 
@@ -82,15 +83,15 @@ func (m *Monitor) Run() {
 			m.StopTime = time.Now()
 		}()
 
-		log.Println("monitor started", m.Id)
+		log.Printf("Monitor %s started for endpoint %s", m.Id, m.endpoint)
 
 		for range m.ticker {
 			select {
 			case <-m.stop:
-				log.Println("monitor stopped", m.Id)
+				log.Println("Monitor stopped", m.Id)
 				return
 			case <-m.timeout:
-				log.Println("timed out", m.Id)
+				log.Println("Timed out", m.Id)
 				return
 			default:
 				m.RequestCount++

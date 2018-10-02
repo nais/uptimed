@@ -92,6 +92,7 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	monitor.Stop()
 	delete(monitors, id)
 
+	log.Print()
 	fmt.Fprintf(w, "%s\n", monitor.Result())
 }
 
