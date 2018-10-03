@@ -12,7 +12,9 @@ RUN go build -a -installsuffix cgo -o uptimed
 
 FROM alpine:3.8
 MAINTAINER Sten Røkke <sten.ivar.rokke@nav.no>
+COPY webproxy.crt /usr/local/share/ca-certificates/
 RUN apk add --no-cache ca-certificates
+RUN	update-ca-certificates
 WORKDIR /app
 COPY --from=builder /src/uptimed /app/uptimed
 CMD ["/app/uptimed"]

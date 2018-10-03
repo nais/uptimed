@@ -1,7 +1,6 @@
 package monitor
 
 import (
-	"crypto/tls"
 	"fmt"
 	"github.com/rs/xid"
 	"io/ioutil"
@@ -96,8 +95,7 @@ func (m *Monitor) Run() {
 				return
 			default:
 				m.RequestCount++
-				http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-				response, err := http.Get(m.endpoint.String())
+				response, err := http.DefaultClient.Get(m.endpoint.String())
 
 				if err != nil {
 					m.FailedRequests = append(m.FailedRequests,
