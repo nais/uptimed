@@ -16,7 +16,7 @@ jobs:
           name: Build Docker container
           command: docker build -t navikt/uptimed:"$VERSION" .
       - run:
-          name: Push canary Docker container
+          name: Push Docker container
           command: docker push navikt/uptimed:"$VERSION"
 
   publish-github-release:
