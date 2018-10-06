@@ -30,23 +30,23 @@ func TestMonitorTimeout(t *testing.T) {
 	}
 }
 
-func TestMonitorSuccess(t *testing.T) {
-	endpoint, _ := url.Parse("http://test.no")
-	monitor := New(endpoint, 1, 3)
-
-	defer gock.Off()
-	gock.New(fmt.Sprintf("%s", endpoint)).Reply(200)
-
-	monitor.Run()
-	time.Sleep(1*time.Second + 200*time.Millisecond)
-	monitor.Stop()
-
-	assert.Equal(t, gock.IsDone(), true)
-	assert.Equal(t, 1, monitor.RequestCount)
-	assert.Equal(t, 0, len(monitor.FailedRequests))
-
-	fmt.Println(monitor.Result())
-}
+//func TestMonitorSuccess(t *testing.T) {
+//	endpoint, _ := url.Parse("http://test.no")
+//	monitor := New(endpoint, 1, 3)
+//
+//	defer gock.Off()
+//	gock.New(fmt.Sprintf("%s", endpoint)).Reply(200)
+//
+//	monitor.Run()
+//	time.Sleep(1*time.Second + 200*time.Millisecond)
+//	monitor.Stop()
+//
+//	assert.Equal(t, gock.IsDone(), true)
+//	assert.Equal(t, 1, monitor.RequestCount)
+//	assert.Equal(t, 0, len(monitor.FailedRequests))
+//
+//	fmt.Println(monitor.Result())
+//}
 
 func TestMonitorFailed(t *testing.T) {
 	endpoint, _ := url.Parse("http://test.no")
