@@ -93,7 +93,7 @@ func stopMonitor(w http.ResponseWriter, r *http.Request) {
 	delete(monitors, id)
 
 	log.Print()
-	fmt.Fprintf(w, "%s\n", monitor.Result())
+	fmt.Fprintf(w, "%.2f", monitor.Result())
 }
 
 func getMonitorSettings(queryParams url.Values) (*url.URL, int, int, error) {

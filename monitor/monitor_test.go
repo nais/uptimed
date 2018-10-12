@@ -75,6 +75,5 @@ func TestNonexistantHost(t *testing.T) {
 	monitor.Stop()
 
 	result := monitor.Result()
-	assert.Contains(t, result, "errorcount: 1")
-	assert.Contains(t, result, "uptime=0.00%")
+	assert.Equal(t, result, 0.00)
 }

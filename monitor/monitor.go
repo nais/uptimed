@@ -31,14 +31,16 @@ type FailedRequest struct {
 }
 
 // Result prints the results after monitoring
-func (m *Monitor) Result() string {
-	return fmt.Sprintf("uptime=%.2f%%\n%d / %d\n%sstarted: %s\nstopped: %s",
-		calculateUptimePercent(m.RequestCount, len(m.FailedRequests)),
-		m.RequestCount-len(m.FailedRequests),
+func (m *Monitor) Result() float64 {
+	log.Printf("Monitor %s - requests: %d, failed requests: %d, started: %s, stopped: %s, %s",
+		m.Id,
 		m.RequestCount,
-		m.PrintFailed(),
+		len(m.FailedRequests),
 		m.StartTime.Format(time.RFC3339),
-		m.StopTime.Format(time.RFC3339))
+		m.StopTime.Format(time.RFC3339),
+		m.PrintFailed())
+	return calculateUptimePercent(m.RequestCount, len(m.FailedRequests))
+
 }
 
 // PrintFailed prints the failed requests should there be any
