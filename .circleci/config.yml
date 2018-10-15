@@ -22,15 +22,16 @@ jobs:
           command: docker build -t navikt/uptimed:"$VERSION" .
 
       - run:
-          name: Push Docker container
-          command: docker push navikt/uptimed:"$VERSION"
-
-      - run:
           name: Publish Release on GitHub
           command: |
-            go get github.com/tcnksm/ghr
-            ls -lR
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION}
+            git remote set-url origin https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/nais/uptimed
+            git commit version -m "Release version ${VERSION} [skip ci]"
+            git tag ${VERSION}
+            git push && git push --tags
+
+      - run:
+          name: Push Docker container
+          command: docker push navikt/uptimed:"$VERSION"
 
       - run:
           name: Update version for next release
@@ -38,4 +39,14 @@ jobs:
             NEWVERSION=$((${VERSION}+1))
             echo ${NEWVERSION} > ./version
             git commit -a -m "Updated uptimed to version ${NEWVERSION}"
+            git push
+
+      - run:
+          name: Update version in nais-yaml
+          command: |
+            naisyaml=$(mktemp -d)
+            git clone https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/navikt/nais-yaml $naisyaml
+            cd $naisyaml
+            sed -i 's/version.*/version\: '"${VERSION}"'/g' vars/uptimed.yaml
+            git commit -a -m "Update uptimed to ${VERSION}"
             git push
