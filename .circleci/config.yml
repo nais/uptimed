@@ -3,18 +3,30 @@ jobs:
   build:
     docker:
       - image: circleci/golang:1.11
+
+    working_directory: /tmp/uptimed
+
     steps:
       - setup_remote_docker
+
       - checkout
+
+      - run:
+          name: Create workspace
+          command: mkdir -p /tmp/uptimed
+
       - run:
           name: Setting application version
           command: echo 'export VERSION=$(cat ./version)' >> $BASH_ENV
+
       - run:
           name: Login to Dockerhub
           command: echo "$DOCKER_PASSWORD" | base64 --decode | docker login -u "$DOCKER_USER" --password-stdin
+
       - run:
           name: Build Docker container
           command: docker build -t navikt/uptimed:"$VERSION" .
+
       - run:
           name: Push Docker container
           command: docker push navikt/uptimed:"$VERSION"
@@ -22,12 +34,35 @@ jobs:
   publish-github-release:
     docker:
       - image: cibuilds/github:0.10
+
     steps:
       - attach_workspace:
-          at: ./
+          at: /tmp/uptimed
+
       - run:
-          name: \"Publish Release on GitHub\"
+          name: Publish Release on GitHub
           command: |
             VERSION=$(cat ./version)
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} /tmp/uptimed
 
+      - run:
+          name: Update version for next release
+          command: |
+            git clone https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/nais/uptimed
+            cd uptimed
+            NEWVERSION=$(($(cat ./version)+1))
+            echo ${NEWVERSION} > ./version
+            git commit -a -m "Updated uptimed to version ${NEWVERSION}"
+            git push
+
+workflows:
+  version: 2
+  build-release:
+    jobs:
+    - build
+    - publish-github-release:
+        requires:
+        - build
+        filters:
+          branches:
+            only: master

@@ -79,6 +79,11 @@ func (m *Monitor) Stop() {
 
 // Run controls the action of the monitoring of applications
 func (m *Monitor) Run() {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	m.StartTime = time.Now()
 	go func() {
 		defer func() {
