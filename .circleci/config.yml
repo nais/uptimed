@@ -24,29 +24,24 @@ jobs:
       - run:
           name: Publish Release on GitHub
           command: |
-            git remote set-url origin https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/nais/uptimed
-            git commit version -m "Release version ${VERSION} [skip ci]"
-            git tag ${VERSION}
-            git push && git push --tags
+            git tag -a ${VERSION} -m "Release uptimed ${VERSION} [skip ci]" && git push --tags https://$GITHUB_TOKEN@github.com/nais/uptimed
 
       - run:
           name: Push Docker container
           command: docker push navikt/uptimed:"$VERSION"
 
       - run:
+          name: Update version in nais-yaml
+          command: |
+            git clone https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/navikt/nais-yaml && cd nais-yaml
+            sed -i 's/version.*/version\: '"${VERSION}"'/g' vars/uptimed.yaml
+            git commit -am "Update uptimed to ${VERSION}"
+            git push
+
+      - run:
           name: Update version for next release
           command: |
             NEWVERSION=$((${VERSION}+1))
             echo ${NEWVERSION} > ./version
-            git commit -a -m "Updated uptimed to version ${NEWVERSION}"
-            git push
-
-      - run:
-          name: Update version in nais-yaml
-          command: |
-            naisyaml=$(mktemp -d)
-            git clone https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/navikt/nais-yaml $naisyaml
-            cd $naisyaml
-            sed -i 's/version.*/version\: '"${VERSION}"'/g' vars/uptimed.yaml
-            git commit -a -m "Update uptimed to ${VERSION}"
+            git commit -am "Updated uptimed to ${NEWVERSION}"
             git push
