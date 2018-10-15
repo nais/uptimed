@@ -33,6 +33,7 @@ jobs:
 
       - run:
           name: Update version for next release
+          command: |
             NEWVERSION=$((${VERSION}+1))
             echo ${NEWVERSION} > ./version
             git commit -a -m "Updated uptimed to version ${NEWVERSION}"
