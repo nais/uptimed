@@ -24,6 +24,7 @@ jobs:
       - run:
           name: Publish Release on GitHub
           command: |
+            git config --global user.name "${CIRCLE_PROJECT_USERNAME}"
             git tag -a ${VERSION} -m "Release uptimed ${VERSION} [skip ci]" && git push --tags https://$GITHUB_TOKEN@github.com/nais/uptimed
 
       - run:
