@@ -42,14 +42,14 @@ jobs:
       - run:
           name: Publish Release on GitHub
           command: |
+            git clone https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/nais/uptimed
+            cd uptimed
             VERSION=$(cat ./version)
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} /tmp/uptimed
 
       - run:
           name: Update version for next release
           command: |
-            git clone https://${CIRCLE_PROJECT_USERNAME}:${GITHUB_TOKEN}@github.com/nais/uptimed
-            cd uptimed
             NEWVERSION=$(($(cat ./version)+1))
             echo ${NEWVERSION} > ./version
             git commit -a -m "Updated uptimed to version ${NEWVERSION}"
