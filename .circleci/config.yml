@@ -44,6 +44,6 @@ jobs:
           command: |
             NEWVERSION=$((${VERSION}+1))
             echo ${NEWVERSION} > ./version
-            git commit --amend --reset-author
             git commit -am "Updated uptimed to ${NEWVERSION}"
-            git push
+            git commit --amend --reset-author --no-edit
+            git push https://$GITHUB_TOKEN@github.com/nais/uptimed
