@@ -90,15 +90,14 @@ func (m *Monitor) Run() {
 		for range m.ticker {
 			select {
 			case <-m.stop:
-				log.Println("Monitor stopped", m.Id)
 				return
 			case <-m.timeout:
 				log.Println("Timed out", m.Id)
 				return
 			default:
 				m.RequestCount++
-				response, err := http.DefaultClient.Get(m.endpoint.String())
 
+				response, err := http.DefaultClient.Get(m.endpoint.String())
 				if err != nil {
 					m.FailedRequests = append(m.FailedRequests,
 						FailedRequest{time.Now(), fmt.Sprintf("error performing http request: %s", err)})
@@ -115,7 +114,6 @@ func (m *Monitor) Run() {
 
 					m.FailedRequests = append(m.FailedRequests,
 						FailedRequest{time.Now(), fmt.Sprintf("http status code: %d\nresponse body: %s", response.StatusCode, string(body))})
-					return
 				}
 			}
 		}
