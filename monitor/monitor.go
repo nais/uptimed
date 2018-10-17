@@ -101,7 +101,6 @@ func (m *Monitor) Run() {
 				if err != nil {
 					m.FailedRequests = append(m.FailedRequests,
 						FailedRequest{time.Now(), fmt.Sprintf("error performing http request: %s", err)})
-					return
 				}
 
 				if response.StatusCode != 200 { //TODO: maybe make this configurable by query param
@@ -109,7 +108,6 @@ func (m *Monitor) Run() {
 					if err != nil {
 						m.FailedRequests = append(m.FailedRequests,
 							FailedRequest{time.Now(), fmt.Sprintf("could not read response body: %s", err)})
-						return
 					}
 
 					m.FailedRequests = append(m.FailedRequests,
