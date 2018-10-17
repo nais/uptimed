@@ -101,18 +101,19 @@ func (m *Monitor) Run() {
 				if err != nil {
 					m.FailedRequests = append(m.FailedRequests,
 						FailedRequest{time.Now(), fmt.Sprintf("error performing http request: %s", err)})
-				}
+				} else {
+					if response.StatusCode != 200 { //TODO: maybe make this configurable by query param
+						body, err := ioutil.ReadAll(response.Body)
+						if err != nil {
+							m.FailedRequests = append(m.FailedRequests,
+								FailedRequest{time.Now(), fmt.Sprintf("could not read response body: %s", err)})
+						}
 
-				if response.StatusCode != 200 { //TODO: maybe make this configurable by query param
-					body, err := ioutil.ReadAll(response.Body)
-					if err != nil {
 						m.FailedRequests = append(m.FailedRequests,
-							FailedRequest{time.Now(), fmt.Sprintf("could not read response body: %s", err)})
+							FailedRequest{time.Now(), fmt.Sprintf("http status code: %d\nresponse body: %s", response.StatusCode, string(body))})
 					}
-
-					m.FailedRequests = append(m.FailedRequests,
-						FailedRequest{time.Now(), fmt.Sprintf("http status code: %d\nresponse body: %s", response.StatusCode, string(body))})
 				}
+
 			}
 		}
 	}()
