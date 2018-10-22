@@ -9,7 +9,7 @@ Tool for checking the uptime of a given endpoint
 ## Usage
 
 ```
-$ curl http://<uptimed>/start?url=<url>&timeout=1800&interval=2
+$ curl http://<uptimed>/start?endpoint=<url>&timeout=1800&interval=2
 <monitor_id>
 $ // do stuff
 $ curl http://<uptimed>/stop/<monitor_id>
