@@ -113,8 +113,9 @@ func (m *Monitor) Run() {
 							FailedRequest{time.Now(), fmt.Sprintf("http status code: %d\nresponse body: %s", response.StatusCode, string(body))})
 
 					}
+					response.Body.Close()
 				}
-				response.Body.Close()
+
 			}
 		}
 	}()
