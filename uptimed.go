@@ -9,6 +9,7 @@ import (
 	m "github.com/nais/uptimed/monitor"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"net/url"
 	"os"
 	"os/signal"
@@ -36,6 +37,18 @@ func main() {
 	r.HandleFunc("/isAlive", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+
+	// Profiling endpoints
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/block", pprof.Handler("block").ServeHTTP)
+	r.HandleFunc("/debug/pprof/heap", pprof.Handler("heap").ServeHTTP)
+	r.HandleFunc("/debug/pprof/goroutine", pprof.Handler("goroutine").ServeHTTP)
+	r.HandleFunc("/debug/pprof/threadcreate", pprof.Handler("threadcreate").ServeHTTP)
+	r.HandleFunc("/debug/pprof/allocs", pprof.Handler("allocs").ServeHTTP)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
 	log.Println("running @", bindAddr)
 	server := &http.Server{Addr: bindAddr, Handler: r}
