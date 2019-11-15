@@ -15,7 +15,7 @@ jobs:
 
       - run:
           name: Login to Dockerhub
-          command: echo "$DOCKER_PASSWORD" | base64 --decode | docker login -u "$DOCKER_USER" --password-stdin
+          command: docker login -u "$DOCKER_USER" -p "$DOCKER_PASSWORD"
 
       - run:
           name: Build Docker container
